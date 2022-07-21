@@ -1,0 +1,116 @@
+#Importing libraries
+library(raster)
+library(RStoolbox)
+
+#Setting working directory
+setwd("D:/lab/") #Setto la working directory
+
+#Importing data
+l92 <- brick("defor1_.jpg")
+#NIR 1 - R 2 - G 3
+plotRGB(l92, 1, 2, 3, stretch="lin")
+
+#Importing defor2 and plot both in a single
+l06 <- brick("defor2_.jpg")
+plotRGB(l06, 1, 2, 3, stretch="lin")
+par(mfrow=c(2,1))
+plotRGB(l92, 1, 2, 3, stretch="lin")
+plotRGB(l06, 1, 2, 3, stretch="lin")
+
+#Calling the library ggplot2
+library(ggplot2)
+
+#making a simple multiframe with ggplot2
+ggRGB(l92, 1, 2, 3, stretch="lin")
+ggRGB(l06, 1, 2, 3, stretch="lin")
+
+#Installing the library patchwork
+install.packages("patchwork")
+
+#Importing the library patchwork
+library(patchwork)
+
+#Assigning the previous plot to variables
+p1 <- ggRGB(l92, 1, 2, 3, stretch="lin")
+p2 <- ggRGB(l06, 1, 2, 3, stretch="lin")
+
+#Using patchwork we can create a frame adding two variables
+p1+p2
+#Creating a frame with vertical layout
+p1/p2
+
+#classification 1996 image
+l92c <- unsuperClass(l92, nClasses=2)
+l92c
+
+plot(l92c$map)
+#Agricultural areas = class 1
+#Forest = class 2
+
+#classification 2006 image
+l06c <- unsuperClass(l06, nClasses = 2)
+l06c
+
+plot(l06c$map)
+#Showing plot in vertical multiframe
+plot(l92c$map)/plot(l06c$map)
+#Agricultural areas = class 1
+#Forest = class 2
+
+#Calculating pixel frequency for classes
+freq(l92c$map)
+#variable l92c result - class 1: 35049 (agricultural) - class 2: 306243 (forest)
+freq(l06c$map)
+#variable l06c result - class 2: 164474 (agricultural) - class 2: 178252 (forest)
+
+#Assigning to a variable the total number of pixel of the first image
+tot92 <- 341292
+#Calculating and showing the percentage of forest
+prop_forest_92 <- 306243/tot92
+prop_forest_92 #89,73% is forest in the first image
+#Calculating and showing the percentage of agricultural areas
+prop_agric_92 <- 35049/tot92
+prop_agric_92 #10,27% are agricultural areas in the first image
+
+#The same for the 2006 image
+tot06 <- 342726
+#Calculating and showing pixel forest for 2006 image
+prop_forest_06 <- 178252/tot06
+prop_forest_06 #52,01% are forest pixel
+#Calculating and showing pixel for agricultural areas in 1992 image
+prop_agric_06 <- 164474/tot06
+prop_agric_06 #47,99% are agricultural areas pixel
+
+#FINAL DATA:
+prop_forest_92 #89,73% is forest in the first image
+prop_agric_92 #10,27% are agricultural areas in the first image
+prop_forest_06 #52,01% are forest pixel
+prop_agric_06 #47,99% are agricultural areas pixel
+
+#Building a dataframe with data
+#Columns
+classes <- c("Forest", "Agriculture")
+percent_1992 <- c(89.73 , 10.27)
+percent_2006 <- c(52.01, 47.99)
+
+multitemporal <- data.frame(classes, percent_1992, percent_2006)
+View(multitemporal)
+
+#Creating a ggplot for 1992
+ggplot(multitemporal, aes(classes, percent_1992, color=classes)) +
+geom_bar(stat="identity", fill = "coral")
+
+#Creating a ggplot for 2006
+ggplot(multitemporal, aes(classes, percent_2006, color=classes)) +
+  geom_bar(stat="identity", fill = "azure")
+
+#Creating pdf for 1992
+pdf("percentages_1992.pdf")
+ggplot(multitemporal, aes(classes, percent_1992, color=classes)) +
+  geom_bar(stat="identity", fill = "coral")
+dev.off()
+#Creating pdf for 2006
+pdf("percentages_2006.pdf")
+ggplot(multitemporal, aes(classes, percent_2006, color=classes)) +
+  geom_bar(stat="identity", fill = "azure")
+dev.off()
