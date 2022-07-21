@@ -1,0 +1,48 @@
+#R_code_variability
+
+#Importing raster package
+library(raster)
+#Importing RStoolbox
+library(RStoolbox)
+#Importing ggplot2
+library(ggplot2)
+#Importing patchwork
+library(patchwork)
+#Importing viridis
+library(viridis)
+
+#Setting working directory
+setwd("D:/lab/")
+
+#Importing the Similaun image
+satellite <- brick("sentinel.png")
+satellite
+
+#Plotting the image by the ggRGB function
+senplot1 <- ggRGB(satellite, 1, 2, 3, stretch="lin")
+#Changing the color plotting
+senplot2 <- ggRGB(satellite, 2, 1, 3, stretch="lin")
+
+#Plotting the two graphs one beside the other
+senplot1 + senplot2
+
+#Calculation variability over NIR
+nir <- satellite[[1]]
+sd3 <- focal(nir, matrix(1/9, 3, 3), fun=sd)
+
+#Creating colorRampPalette and plotting the variability
+clsd <- colorRampPalette(c("blue", "green", "pink", "magenta", "orange", "brown", "red", "yellow"))(100)
+plot(sd3, col=clsd)
+
+#Plotting with ggplot
+ggplot() + geom_raster(sd3, mapping = aes(x=x, y=y, fill=layer)) 
+
+#The same but with viridis
+ggplot() + geom_raster(sd3, mapping = aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis() + ggtitle("Standard deviation by viridis package")
+
+#Same calculation with 7x7 window
+sd7 <- focal(nir, matrix(1/49, 7, 7), fun=sd)
+plot(sd7, col=clsd)
+
+
