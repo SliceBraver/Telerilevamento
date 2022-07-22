@@ -1,0 +1,80 @@
+#R_code_variability_2
+
+#Importing raster package
+library(raster)
+#Importing RStoolbox
+library(RStoolbox)
+#Importing Patchwork
+library(patchwork)
+
+#Setting working directory
+setwd("D:/lab/")
+
+#Importing image
+sen <- brick("sentinel.png")
+
+#NIR = band 1
+#RED = band 2
+#GREEN = band 3
+
+#Viewing image via ggRGB assigning RGB to 1, 2 ,3
+ggRGB(sen, 1, 2, 3)
+
+#Visualize the image such as vegetation becomes green (fluo!)
+ggRGB(sen, 2, 1, 3)
+
+#RasterPCA: Principal Component Analysis for Rasters
+#Multivariate analysis
+sen_pca <- rasterPCA(sen)
+sen_pca
+
+#Summary of sen_pca's model
+summary(sen_pca$model)
+#Viewing sen_pca's maps
+plot(sen_pca$map)
+
+#Declaring variables with map components
+pc1 <- sen_pca$map$PC1
+pc2 <- sen_pca$map$PC2
+pc3 <- sen_pca$map$PC3
+#Creating ggplot for pc1
+g1 <- ggplot() + geom_raster(pc1, mapping=aes(x=x, y=y, fill=PC1))
+g2 <- ggplot() + geom_raster(pc2, mapping=aes(x=x, y=y, fill=PC2))
+g3 <- ggplot() + geom_raster(pc3, mapping=aes(x=x, y=y, fill=PC3))
+
+g1+g2+g3
+
+#Standard deviation of PC1
+sd_pc1 <- focal(pc1, matrix(1/9, 3, 3), fun=sd)
+sd_pc1
+#Map by ggplot the standard deviaton of the first principal component
+ggplot() + geom_raster(sd_pc1, mapping=aes(x=x, y=y, fill=layer))
+
+#with viridis
+ggplot() + geom_raster(sd_pc1, mapping=aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis(option="magma") + 
+  ggtitle("Maps of Standard deviation with Magma viridis option")
+
+#Images altogether
+im1 <- ggRGB(sen, 2, 1, 3)
+im2 <- ggplot() + geom_raster(pc1, mapping=aes(x=x, y=y, fill=PC1))
+im3 <- ggplot() + geom_raster(sd_pc1, mapping=aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis(option="magma") 
+
+im1 + im2 + im3
+
+#Calculating heterogeneity in a 5x5 window
+sd5_pc1 <- focal(pc1, matrix(1/25, 5, 5), fun=sd)
+im4 <- ggplot() + geom_raster(sd5_pc1, mapping=aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis(option="magma")
+#Comparing the same img with different heterogeneity
+im3 + im4
+
+#Calculating heterogeneity in a 7x7 window
+sd7_pc1 <- focal(pc1, matrix(1/49, 7, 7), fun=sd)
+im5 <- ggplot() + geom_raster(sd7_pc1, mapping=aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis(option="magma")
+#Comparing heterogeneity images
+im3 + im4 + im5
+
+
